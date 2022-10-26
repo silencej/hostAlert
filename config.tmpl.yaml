@@ -1,3 +1,4 @@
 target:
   name: slack
   url: https://hooks.slack.com/services/XXX/XXX/XXX
+ProcessToMonitor: batch-proc

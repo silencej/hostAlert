@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"time"
 
 	"github.com/spf13/viper"
@@ -22,8 +23,9 @@ type Target struct {
 }
 
 type Config struct {
-	Target       Target `json:"target"`
-	SpaceLimitMB uint64 `json:"spaceLimitMB"`
+	Target           Target `json:"target"`
+	SpaceLimitMB     uint64 `json:"spaceLimitMB"`
+	ProcessToMonitor string `json:"processToMonitor"`
 }
 
 func readCfg() Config {
@@ -32,6 +34,7 @@ func readCfg() Config {
 	viper.AddConfigPath("$HOME/.hostAlert")
 	viper.AddConfigPath(".") // optionally look for config in the working directory
 	viper.SetDefault("SpaceLimitMB", 5*1024)
+	viper.SetDefault("ProcessToMonitor", "")
 
 	err := viper.ReadInConfig() // Find and read the config file
 	if err != nil {             // Handle errors reading the config file
@@ -60,6 +63,15 @@ func freeSpaceOnUnix() uint64 {
 	freeSpace := stat.Bavail * uint64(stat.Bsize) / 1024 / 1024 // In MB.
 	fmt.Println("Free: ", freeSpace, " MB")
 	return freeSpace
+}
+
+func processIsRunning(process string) (bool, string) {
+	out, err := exec.Command("bash", "-c", fmt.Sprintf("ps aux | grep %s | fgrep -v grep", process)).Output()
+	if err != nil {
+		return false, string(out)
+	}
+
+	return true, string(out)
 }
 
 type SlackRequest struct {
@@ -110,12 +122,25 @@ func main() {
 				log.Panic("Fail to get hostname: ", err)
 			}
 
+			process := cfg.ProcessToMonitor
+			if process != "" {
+				res, out := processIsRunning(process)
+				if !res {
+					sendMsg(cfg, fmt.Sprintf("%s", out))
+				}
+			}
+
 			if freeSpace < cfg.SpaceLimitMB {
 				sendMsg(cfg, fmt.Sprintf("Not enough space on %s: %d MB free", hostname, freeSpace))
 			}
 
 			if c.Bool("force") {
 				sendMsg(cfg, fmt.Sprintf("Space on %s: %d MB free", hostname, freeSpace))
+				if process != "" {
+					res, out := processIsRunning(process)
+					sendMsg(cfg, fmt.Sprintf("%t: %s", res, out))
+				}
+
 			}
 			return nil
 		},
