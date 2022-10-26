@@ -129,7 +129,7 @@ func main() {
 			if process != "" {
 				res, out := processIsRunning(process)
 				if !res {
-					sendMsg(cfg, fmt.Sprintf("%s", out))
+					sendMsg(cfg, fmt.Sprintf("%s - %t: %s", hostname, res, out))
 				}
 			}
 
@@ -141,7 +141,7 @@ func main() {
 				sendMsg(cfg, fmt.Sprintf("Space on %s: %d MB free", hostname, freeSpace))
 				if process != "" {
 					res, out := processIsRunning(process)
-					sendMsg(cfg, fmt.Sprintf("%t: %s", res, out))
+					sendMsg(cfg, fmt.Sprintf("%s - %t: %s", hostname, res, out))
 				}
 
 			}
