@@ -66,7 +66,9 @@ func freeSpaceOnUnix() uint64 {
 }
 
 func processIsRunning(process string) (bool, string) {
+	log.Println("Process to monitor: ", process)
 	out, err := exec.Command("bash", "-c", fmt.Sprintf("ps aux | grep %s | fgrep -v grep", process)).Output()
+	log.Println(string(out), err)
 	if err != nil {
 		return false, string(out)
 	}
@@ -117,6 +119,7 @@ func main() {
 
 			freeSpace := freeSpaceOnUnix()
 			cfg := readCfg()
+			log.Println(cfg)
 			hostname, err := os.Hostname()
 			if err != nil {
 				log.Panic("Fail to get hostname: ", err)
