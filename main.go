@@ -126,24 +126,24 @@ func main() {
 			}
 
 			process := cfg.ProcessToMonitor
-			if process != "" {
-				res, out := processIsRunning(process)
-				if !res {
-					sendMsg(cfg, fmt.Sprintf("%s - %t: %s", hostname, res, out))
-				}
-			}
-
-			if freeSpace < cfg.SpaceLimitMB {
-				sendMsg(cfg, fmt.Sprintf("Not enough space on %s: %d MB free", hostname, freeSpace))
-			}
 
 			if c.Bool("force") {
 				sendMsg(cfg, fmt.Sprintf("Space on %s: %d MB free", hostname, freeSpace))
 				if process != "" {
 					res, out := processIsRunning(process)
-					sendMsg(cfg, fmt.Sprintf("%s - %t: %s", hostname, res, out))
+					sendMsg(cfg, fmt.Sprintf("%s @ %s - %t: %s", process, hostname, res, out))
+				}
+			} else {
+				if process != "" {
+					res, out := processIsRunning(process)
+					if !res {
+						sendMsg(cfg, fmt.Sprintf("%s @ %s - %t: %s", process, hostname, res, out))
+					}
 				}
 
+				if freeSpace < cfg.SpaceLimitMB {
+					sendMsg(cfg, fmt.Sprintf("Not enough space on %s: %d MB free", hostname, freeSpace))
+				}
 			}
 			return nil
 		},
